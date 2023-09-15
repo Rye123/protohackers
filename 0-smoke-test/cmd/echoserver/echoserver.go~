@@ -1,0 +1,54 @@
+package main
+
+import (
+	"net"
+	"io"
+	"fmt"
+)
+
+const SERVER_PORT = 6969
+
+// Receives a full message until EOL through the given connection.
+func recvMsg(conn net.Conn) (msg string, err error) {
+	buf := make([]byte, 256)
+	for {
+		_, err := conn.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				return string(buf), nil
+			}
+			return "", err
+		}
+	}
+}
+
+func main() {
+	fmt.Printf("Running on %d.\n", SERVER_PORT)
+	listen_sock, err := net.Listen("tcp", fmt.Sprintf(":%d", SERVER_PORT))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	defer listen_sock.Close()
+
+	for {
+		conn, err := listen_sock.Accept()
+		fmt.Printf("Received connection from %v.\n", conn.RemoteAddr())
+		if err != nil {
+			fmt.Printf("Connection Error: %v\n", err)
+			continue
+		}
+
+		go func(c net.Conn) {
+			msg, err := recvMsg(c)
+			if err != nil {
+				fmt.Printf("Connection Receive Error: %v\n", err)
+				return
+			}
+
+			fmt.Printf("Received message: %v\n.", msg)
+
+			c.Write([]byte(msg))
+			c.Close()
+		}(conn)
+	}
+}
