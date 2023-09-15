@@ -4,9 +4,6 @@ import (
 	"net"
 	"io"
 	"fmt"
-	"time"
-	"errors"
-	"os"
 )
 
 const SERVER_PORT = 6969
@@ -21,16 +18,12 @@ func recvMsg(conn net.Conn) (msg []byte, err error) {
 		_, err := conn.Read(buf)
 
 		if err != nil {
-			if err == io.EOF || errors.Is(err, os.ErrDeadlineExceeded) {
+			if err == io.EOF {
 				return message, nil
 			}
 			return []byte(""), err
 		}
-
-		for _, c := range buf {
-			message = append(message, c)
-		}
-		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+		message = append(message, buf[:]...)
 	}
 }
 
