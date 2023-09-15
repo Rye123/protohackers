@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 	"bufio"
+	"errors"
 )
 
 const DEFAULT_TIMEOUT = 5
@@ -20,7 +21,7 @@ func recvMsg(conn net.Conn) (msg []byte, err error) {
 		_, err := conn.Read(buf)
 
 		if err != nil {
-			if err == io.EOF {
+			if err == io.EOF  || errors.Is(err, os.ErrDeadlineExceeded) {
 				return message, nil
 			}
 			return []byte(""), err
@@ -28,9 +29,6 @@ func recvMsg(conn net.Conn) (msg []byte, err error) {
 
 		for _, c := range buf {
 			message = append(message, c)
-			if c == '\n' {
-				return message, nil
-			}
 		}
 		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 	}
