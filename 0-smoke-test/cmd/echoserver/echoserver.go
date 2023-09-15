@@ -26,10 +26,10 @@ func recvMsg(conn net.Conn) (msg string, err error) {
 		}
 
 		for _, c := range buf {
+			message = append(message, c)
 			if c == '\n' {
 				return string(message), nil
 			}
-			message = append(message, c)
 		}
 		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 	}
