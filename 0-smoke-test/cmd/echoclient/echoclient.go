@@ -12,7 +12,7 @@ import (
 const DEFAULT_TIMEOUT = 5
 
 // Receives until '\n' through the given connection.
-func recvMsg(conn net.Conn) (msg string, err error) {
+func recvMsg(conn net.Conn) (msg []byte, err error) {
 	message := make([]byte, 0, 1024)
 	
 	for {
@@ -21,15 +21,15 @@ func recvMsg(conn net.Conn) (msg string, err error) {
 
 		if err != nil {
 			if err == io.EOF {
-				return string(message), nil
+				return message, nil
 			}
-			return "", err
+			return []byte(""), err
 		}
 
 		for _, c := range buf {
 			message = append(message, c)
 			if c == '\n' {
-				return string(message), nil
+				return message, nil
 			}
 		}
 		conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
@@ -76,7 +76,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Received: %v\n", resp)
+	fmt.Printf("Received: %v\n", string(resp))
 
 
 }
