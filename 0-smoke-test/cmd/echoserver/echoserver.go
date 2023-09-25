@@ -2,30 +2,11 @@ package main
 
 import (
 	"net"
-	"io"
 	"fmt"
 )
 
 const SERVER_PORT = 6969
 const DEFAULT_TIMEOUT = 5
-
-// Receives until '\n' through the given connection.
-func recvMsg(conn net.Conn) (msg []byte, err error) {
-	message := make([]byte, 0, 1024)
-	
-	for {
-		buf := make([]byte, 256)
-		_, err := conn.Read(buf)
-
-		if err != nil {
-			if err == io.EOF {
-				return message, nil
-			}
-			return []byte(""), err
-		}
-		message = append(message, buf[:]...)
-	}
-}
 
 func main() {
 	fmt.Printf("Running on %d.\n", SERVER_PORT)
@@ -44,20 +25,25 @@ func main() {
 		}
 
 		go func(c net.Conn) {
-			msg, err := recvMsg(c)
-			if err != nil {
-				fmt.Printf("Connection Receive Error: %v\n", err)
-				return
+			buf := make([]byte, 256)
+			for {
+				count, err := c.Read(buf)
+				if err != nil { // Includes io.EOF
+					c.Close()
+					fmt.Println("Connection closed.")
+					break
+				}
+				if count == 0 {
+					continue
+				}
+				fmt.Printf("Received: %v\n", string(buf))
+				
+				_, err = c.Write(buf)
+				if err != nil {
+					fmt.Printf("Error in c.Write: %v\n", err)
+				}
+				fmt.Printf("Sent: %v\n", string(buf))
 			}
-
-			fmt.Printf("Received message: %v\n", string(msg))
-			_, err = c.Write(msg)
-			if err != nil {
-				fmt.Printf("Send Error: %v\n", err)
-			}
-			fmt.Printf("Sent: %v\n", string(msg))
-			
-			c.Close()
 		}(conn)
 	}
 }

@@ -63,13 +63,19 @@ func main() {
 	}
 	
 	// Get response
-	resp, err := recvMsg(conn)
-	if err != nil {
-		printErr(fmt.Sprintf("Receive Error: %v", err))
-		return
+	recvbuf := make([]byte, 256)
+	count := 0
+	for count == 0 {
+		count, err = conn.Read(recvbuf)
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("Connection Ended.")
+				return
+			}
+			printErr(fmt.Sprintf("Receive Error: %v", err))
+			return
+		}
 	}
-
-	fmt.Printf("Received: %v\n", string(resp))
-
-
+	fmt.Printf("Received: %v\n", string(recvbuf))
+	conn.Close()
 }
