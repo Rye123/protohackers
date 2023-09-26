@@ -11,24 +11,6 @@ import (
 
 const DEFAULT_TIMEOUT = 5
 
-// Receives until '\n' through the given connection.
-func recvMsg(conn net.Conn) (msg []byte, err error) {
-	message := make([]byte, 0, 1024)
-	
-	for {
-		buf := make([]byte, 256)
-		_, err := conn.Read(buf)
-
-		if err != nil {
-			if err == io.EOF {
-				return message, nil
-			}
-			return []byte(""), err
-		}
-		message = append(message, buf[:]...)
-	}
-}
-
 func printErr(msg string) {
 	fmt.Fprintf(os.Stderr, msg + "\n")
 }
