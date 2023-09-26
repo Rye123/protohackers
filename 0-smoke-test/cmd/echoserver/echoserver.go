@@ -1,8 +1,9 @@
 package main
 
 import (
-	"net"
 	"fmt"
+	"net"
+	"io"
 )
 
 const SERVER_PORT = 6969
@@ -25,20 +26,36 @@ func main() {
 		}
 
 		go func(c net.Conn) {
-			buf := make([]byte, 256)
+			buf := make([]byte, 1024)
 			for {
 				count, err := c.Read(buf)
-				if err != nil { // Includes io.EOF
-					c.Close()
-					fmt.Println("Connection closed.")
-					break
-				}
 				if count == 0 {
+					if err == io.EOF {
+						c.Close()
+						fmt.Println("Connection closed.")
+						break
+					}
+					if err != nil {
+						c.Close()
+						fmt.Printf("Connection closed due to error: %v\n", err)
+						break
+					}
+					// Otherwise, continue reading
 					continue
 				}
-				fmt.Printf("Received: %v\n", string(buf))
-				
-				_, err = c.Write(buf)
+
+				if err != nil && err != io.EOF {
+					c.Close()
+					fmt.Printf("Connection closed prematurely due to error: %v\n", err)
+					break
+				}
+
+				buf = buf[:count] // Truncate to exactly number of received bytes
+
+				fmt.Printf("Recv: %v\n", string(buf))
+
+				// Write exactly that number of bytes as output
+				_, err = c.Write(buf[:count])
 				if err != nil {
 					fmt.Printf("Error in c.Write: %v\n", err)
 				}

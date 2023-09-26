@@ -77,5 +77,4 @@ func main() {
 		}
 	}
 	fmt.Printf("Received: %v\n", string(recvbuf))
-	conn.Close()
 }
